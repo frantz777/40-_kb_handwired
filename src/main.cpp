@@ -9,14 +9,21 @@ const int ascii_shift = 32;
 //char keys[rows][cols] = {
  //   {'esc', 'q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p', 'del'},
    // {'tab', 'a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l', ';', 'enter'},
-   // {'shift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', 'shift'},
-    //{'ctrl', 'win', 'alt', '4', '5', '6', '7', '8', 'left', 'down', 'up', 'right'}
+   // {'shift', 'z', 'x', 'c', 'v', 'b', 'n', 'm', ',', '.', '/', '''},
+    //{'ctrl', 'win', 'alt', 'func', '5', '6', '7', '8', 'left', 'down', 'up', 'right'}
     //};
 
 int keys_no_shift[rows][cols] = { //ascii values
     {177, 113, 119, 101, 114, 116, 121, 117, 105, 111, 112, 178},
-    {179, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59, 176},
-    {129, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 133},
+    {179, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59, 39},
+    {129, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 176},
+    {128, 135, 130, 0, 0, 0, 32, 0, 216, 217, 218, 215}
+    };
+
+int keys_funct[rows][cols] = { //ascii values
+    {177, 49, 50, 51, 52, 53, 54, 55, 56, 48, 95, 61},
+    {179, 97, 115, 100, 102, 103, 104, 106, 107, 108, 59, 39},
+    {129, 122, 120, 99, 118, 98, 110, 109, 44, 46, 47, 176},
     {128, 135, 130, 0, 0, 0, 32, 0, 216, 217, 218, 215}
     };
 
@@ -31,7 +38,23 @@ byte rowPins[rows] = {21, 20, 19, 18}; //connect to the row pinouts of the keypa
 byte colPins[cols] = {15, 14, 16, 10, 9, 8, 7, 6, 5, 4, 3, 2}; //connect to the column pinouts of the keypad
 
 void setCurrentKeyState(boolean col_state[], int row ){
+  boolean function_status = 1;
+  if (status[3][3] == 0){
+    function_status = 0;
+  }
   for (int col = 0; col < 12; col++){
+    if(function_status == 0){
+      if(col_state[col] == 0 && status[row][col] == 1){
+        Serial.println("in funct loop");
+        Keyboard.press(keys_funct[row][col]);
+        status[row][col] = col_state[col];
+      }
+      else if (col_state[col] == 1 && status[row][col] == 0){
+        Keyboard.release(keys_funct[row][col]);
+        status[row][col] = col_state[col];
+      }
+    }
+    else{
     if(col_state[col] == 0 && status[row][col] == 1){
       Keyboard.press(keys_no_shift[row][col]);
       status[row][col] = col_state[col];
@@ -39,6 +62,7 @@ void setCurrentKeyState(boolean col_state[], int row ){
     else if (col_state[col] == 1 && status[row][col] == 0){
       Keyboard.release(keys_no_shift[row][col]);
       status[row][col] = col_state[col];
+    }
     }
   }
 }
@@ -73,7 +97,6 @@ void loop() {
   digitalWrite(rowPins[1], HIGH);
   digitalWrite(rowPins[2], HIGH);
   digitalWrite(rowPins[3], HIGH);
-  boolean current_key;
 
   for (int row = 0; row < 4; row++){
     digitalWrite(rowPins[row], LOW);
